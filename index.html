@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Blog</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Mini Blog</h1>
+
+  <form id="postForm">
+    <p><input type="text" name="title" placeholder="タイトル" required></p>
+    <p><textarea name="content" placeholder="内容" required></textarea></p>
+    <p><input type="text" name="image" placeholder="画像URL"></p>
+    <p><input type="text" name="youtube" placeholder="YouTube ID"></p>
+    <button type="submit">投稿する</button>
+  </form>
+
+  <div id="posts">読み込み中...</div>
+
+  <script>
+    const form = document.getElementById('postForm');
+    const postsDiv = document.getElementById('posts');
+
+    async function loadPosts() {
+      const res = await fetch('/list');
+      const posts = await res.json();
+      postsDiv.innerHTML = '';
+      posts.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'post';
+        div.innerHTML = `
+          <h2>${p.title}</h2>
+          <p>${p.content}</p>
+          ${p.image ? `<img src="${p.image}" alt="image">` : ''}
+          ${p.youtube ? `<iframe width="300" src="https://www.youtube.com/embed/${p.youtube}" frameborder="0" allowfullscreen></iframe>` : ''}
+          <small>${p.date}</small>
+        `;
+        postsDiv.appendChild(div);
+      });
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const data = {
+        title: form.title.value,
+        content: form.content.value,
+        image: form.image.value || null,
+        youtube: form.youtube.value || null
+      };
+      await fetch('/submit', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+      form.reset();
+      loadPosts();
+    });
+
+    loadPosts();
+  </script>
+</body>
+</html>
